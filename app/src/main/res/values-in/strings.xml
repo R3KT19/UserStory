@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">UserStory</string>
+    <string name="register">Register</string>
+    <string name="name">Masukkan nama Anda</string>
+    <string name="email">Masukkan email Anda</string>
+    <string name="error_email">Format email tidak sesuai</string>
+    <string name="password">Masukkan password anda</string>
+    <string name="error_password">Jumlah karakter password kurang dari 6</string>
+    <string name="error_description">Deskripsi tidak boleh kosong</string>
+    <string name="login">Login</string>
+    <string name="create_account">Belum punya akun?</string>
+    <string name="create">Daftar</string>
+    <string name="login_account">Sudah punya akun?</string>
+    <string name="login_acc">Masuk</string>
+    <string name="description">Masukkan deskripsi gambar</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="upload">Unggah</string>
+</resources>

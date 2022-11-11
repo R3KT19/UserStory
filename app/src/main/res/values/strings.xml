@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">UserStory</string>
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="register">Register</string>
+    <string name="name">Enter your name</string>
+    <string name="email">Enter your email</string>
+    <string name="error_email">Not a valid email format</string>
+    <string name="password">Enter your password</string>
+    <string name="error_password">Password must be >5 characters</string>
+    <string name="error_description">Description cannot be empty </string>
+    <string name="login">Login</string>
+    <string name="create_account">Don\'t have account?</string>
+    <string name="create">Register</string>
+    <string name="login_account">Already have account?</string>
+    <string name="login_acc">Login</string>
+    <string name="description">Enter picture description</string>
+    <string name="camera">Camera</string>
+    <string name="gallery">Gallery</string>
+    <string name="upload">Upload</string>
+</resources>
