@@ -12,10 +12,6 @@ import com.batararaja.userstory.ui.fragment.RegisterFragment
 class AuthActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAuthBinding
 
-    companion object{
-        private const val TAG = "AuthActivity"
-    }
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAuthBinding.inflate(layoutInflater)

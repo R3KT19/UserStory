@@ -10,21 +10,23 @@ import android.provider.MediaStore
 import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.ViewModelProvider
-import com.batararaja.userstory.MainViewModel
-import com.batararaja.userstory.R
-import com.batararaja.userstory.createCustomTempFile
+import com.batararaja.userstory.*
 import com.batararaja.userstory.databinding.ActivityAddStoryBinding
-import com.batararaja.userstory.uriToFile
 import java.io.File
 
 class AddStoryActivity : AppCompatActivity() {
     private lateinit var binding : ActivityAddStoryBinding
     private lateinit var currentPhotoPath: String
+
+    private val mainViewModel: MainViewModel by viewModels {
+        ViewModelFactory(this)
+    }
 
     private var getFile: File? = null
 
@@ -71,8 +73,8 @@ class AddStoryActivity : AppCompatActivity() {
         binding.cameraButton.setOnClickListener { startTakePhoto() }
         binding.galleryButton.setOnClickListener { startGallery() }
         binding.uploadButton.setOnClickListener { uploadImage() }
-        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-            MainViewModel::class.java)
+
+
         mainViewModel.isLoading.observe(this, {
             showLoading(it)
         })

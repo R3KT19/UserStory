@@ -1,10 +1,14 @@
 package com.batararaja.userstory
 
+import android.content.Context
 import android.util.Log
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.*
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
 import com.batararaja.userstory.api.ApiConfig
+import com.batararaja.userstory.api.entity.StoryEntity
+import com.batararaja.userstory.di.Injection
+import com.dicoding.myunlimitedquotes.data.StoryRepository
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.MediaType.Companion.toMediaTypeOrNull
 import okhttp3.MultipartBody
@@ -15,7 +19,7 @@ import retrofit2.Callback
 import retrofit2.Response
 import java.io.File
 
-class MainViewModel : ViewModel() {
+class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() {
 
     private val _registerResponse = MutableLiveData<RegisterResponse>()
     val register: LiveData<RegisterResponse> = _registerResponse
@@ -32,8 +36,19 @@ class MainViewModel : ViewModel() {
     private val _statusMessage = MutableLiveData<Event<String>>()
     val message : LiveData<Event<String>> = _statusMessage
 
+    val _story = MutableLiveData<PagingData<StoryEntity>>()
+
+    val story: LiveData<PagingData<StoryEntity>> =
+        storyRepository.getStory().cachedIn(viewModelScope)
+
+    val mediator = MediatorLiveData<Unit>()
+
     companion object {
         private const val TAG = "MainViewModel"
+    }
+
+    fun getStory() {
+        mediator.addSource(story, {_story.value = it})
     }
 
     fun register(name: String, email: String, password: String) {
@@ -92,32 +107,32 @@ class MainViewModel : ViewModel() {
         })
     }
 
-    fun getStory() {
-        _isLoading.value = true
-        val client = ApiConfig.getApiService().getStories()
-        client.enqueue(object : Callback<StoryResponse> {
-            override fun onResponse(
-                call: Call<StoryResponse>,
-                response: Response<StoryResponse>
-            ) {
-                _isLoading.value = false
-                if (response.isSuccessful) {
-                    _listStory.value = response.body()?.listStory
-                    _statusMessage.value = Event(response.body()?.message.toString())
-                } else {
-                    _statusMessage.value = Event(response.message())
-                    Log.e(TAG, "onFailure: ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<StoryResponse>, t: Throwable) {
-                _isLoading.value = false
-                _statusMessage.value = Event(t.message.toString())
-                Log.e(TAG, "onFailure: ${t.message.toString()}")
-            }
-
-        })
-    }
+//    fun getStory() {
+//        _isLoading.value = true
+//        val client = ApiConfig.getApiService().getStories()
+//        client.enqueue(object : Callback<StoryResponse> {
+//            override fun onResponse(
+//                call: Call<StoryResponse>,
+//                response: Response<StoryResponse>
+//            ) {
+//                _isLoading.value = false
+//                if (response.isSuccessful) {
+//                    _listStory.value = response.body()?.listStory
+//                    _statusMessage.value = Event(response.body()?.message.toString())
+//                } else {
+//                    _statusMessage.value = Event(response.message())
+//                    Log.e(TAG, "onFailure: ${response.message()}")
+//                }
+//            }
+//
+//            override fun onFailure(call: Call<StoryResponse>, t: Throwable) {
+//                _isLoading.value = false
+//                _statusMessage.value = Event(t.message.toString())
+//                Log.e(TAG, "onFailure: ${t.message.toString()}")
+//            }
+//
+//        })
+//    }
 
     fun uploadImage(photo : File?, desc : String) {
         _isLoading.value = true
@@ -153,5 +168,15 @@ class MainViewModel : ViewModel() {
                 _statusMessage.value = Event(t.message.toString())
             }
         })
+    }
+}
+
+class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
+    override fun <T : ViewModel> create(modelClass: Class<T>): T {
+        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
+            @Suppress("UNCHECKED_CAST")
+            return MainViewModel(Injection.provideRepository(context)) as T
+        }
+        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

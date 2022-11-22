@@ -8,14 +8,17 @@ import android.view.Menu
 import android.view.MenuItem
 import android.view.View
 import android.widget.Toast
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.ViewModelProvider
+import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.batararaja.userstory.ListStoryItem
-import com.batararaja.userstory.MainViewModel
+import com.batararaja.userstory.*
 import com.batararaja.userstory.Preferences
-import com.batararaja.userstory.R
 import com.batararaja.userstory.adapter.ListStoryAdapter
+import com.batararaja.userstory.adapter.LoadingStateAdapter
+import com.batararaja.userstory.adapter.StoryListAdapter
+import com.batararaja.userstory.api.entity.StoryEntity
 import com.batararaja.userstory.databinding.ActivityListStoryBinding
 
 class ListStoryActivity : AppCompatActivity() {
@@ -23,34 +26,43 @@ class ListStoryActivity : AppCompatActivity() {
     init {
         instance = this
     }
+
+    private val mainViewModel: MainViewModel by viewModels {
+        ViewModelFactory(this)
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityListStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-            MainViewModel::class.java)
+//        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
+//            MainViewModel::class.java)
+//
+//        mainViewModel.getStory()
+//        mainViewModel.listStory.observe(this, { data ->
+//            if (data != null) {
+//                setAdapterData(data)
+//            }
+//        })
+//
+//        mainViewModel.isLoading.observe(this, {
+//            showLoading(it)
+//        })
+//
+//        mainViewModel.message.observe(this, {
+//            it.getContentIfNotHandled()?.let {
+//                Toast.makeText(
+//                    this,
+//                    it,
+//                    Toast.LENGTH_SHORT
+//                ).show()
+//            }
+//        })
 
-        mainViewModel.getStory()
-        mainViewModel.listStory.observe(this, { data ->
-            if (data != null) {
-                setAdapterData(data)
-            }
-        })
+        binding.rvStory.layoutManager = LinearLayoutManager(this)
 
-        mainViewModel.isLoading.observe(this, {
-            showLoading(it)
-        })
-
-        mainViewModel.message.observe(this, {
-            it.getContentIfNotHandled()?.let {
-                Toast.makeText(
-                    this,
-                    it,
-                    Toast.LENGTH_SHORT
-                ).show()
-            }
-        })
+        getData()
 
         binding.fabAddStory.setOnClickListener {
             val intent = Intent(this@ListStoryActivity, AddStoryActivity::class.java)
@@ -63,15 +75,30 @@ class ListStoryActivity : AppCompatActivity() {
         binding.rvStory.layoutManager = layoutManager
     }
 
+    private fun getData() {
+        val adapter = StoryListAdapter()
+        binding.rvStory.adapter = adapter.withLoadStateFooter(
+            footer = LoadingStateAdapter {
+                adapter.retry()
+            }
+        )
+        mainViewModel.getStory()
+        mainViewModel.mediator.observe(this, {})
+        mainViewModel._story.observe(this, {
+            adapter.submitData(lifecycle, it)
+        })
+    }
+
     override fun onResume() {
         super.onResume()
         Thread.sleep(100)
-        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-            MainViewModel::class.java)
-        mainViewModel.getStory()
-        mainViewModel.listStory.observe(this, { data ->
-            setAdapterData(data)
-        })
+//        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
+//            MainViewModel::class.java)
+//        mainViewModel.getStory()
+//        mainViewModel.listStory.observe(this, { data ->
+//            setAdapterData(data)
+//        })
+        getData()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -95,22 +122,6 @@ class ListStoryActivity : AppCompatActivity() {
         return true
     }
 
-    private fun setAdapterData(data: List<ListStoryItem>) {
-        val listStory = ArrayList<ListStoryItem>()
-        for (story in data) {
-            listStory.add(story)
-        }
-        val adapter = ListStoryAdapter(listStory)
-        binding.rvStory.setHasFixedSize(true)
-        binding.rvStory.adapter = adapter
-        adapter.setOnItemClickCallback(object : ListStoryAdapter.OnItemClickCallback {
-            override fun onItemClicked(data: ListStoryItem) {
-
-            }
-
-        })
-    }
-
     private fun showLoading(isLoading: Boolean) {
         if (isLoading) {
             binding.progressBar.visibility = View.VISIBLE
@@ -121,7 +132,8 @@ class ListStoryActivity : AppCompatActivity() {
 
     private fun setupAction() {
         binding.settingImageView.setOnClickListener {
-            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
+//            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
+            getData()
         }
     }
 

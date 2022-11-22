@@ -34,13 +34,13 @@ class ListStoryAdapter (private val listStory : ArrayList<ListStoryItem>) : Recy
             .load(listStory[position].photoUrl)
             .into(holder.binding.ivItemPhoto)
         holder.itemView.setOnClickListener {
-            onItemClickCallback.onItemClicked(listStory[holder.adapterPosition])
+            onItemClickCallback.onItemClicked(listStory[holder.absoluteAdapterPosition])
             val intentToDetail = Intent(holder.itemView.context, DetailStoryActivity::class.java)
             val entity = StoryEntity(
-                listStory[holder.adapterPosition].id,
-                listStory[holder.adapterPosition].photoUrl,
-                listStory[holder.adapterPosition].name,
-                listStory[holder.adapterPosition].description
+                listStory[holder.absoluteAdapterPosition].id,
+                listStory[holder.absoluteAdapterPosition].photoUrl,
+                listStory[holder.absoluteAdapterPosition].name,
+                listStory[holder.absoluteAdapterPosition].description
             )
             intentToDetail.putExtra("DATA", entity)
             val optionsCompat: ActivityOptionsCompat =
