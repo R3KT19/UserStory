@@ -134,7 +134,7 @@ class AddStoryActivity : AppCompatActivity() {
         val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
             MainViewModel::class.java)
         if (!binding.edDescription.text.isNullOrEmpty() && getFile != null){
-            mainViewModel.uploadImage(getFile, binding.edDescription.text.toString())
+            mainViewModel.uploadImage(getFile, binding.edDescription.text.toString(), null, null)
             mainViewModel.message.observe(this, {
                 it.getContentIfNotHandled()?.let {
                     Toast.makeText(

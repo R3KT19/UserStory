@@ -3,8 +3,11 @@ package com.batararaja.userstory.ui.activity
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.activity.viewModels
+import com.batararaja.userstory.MainViewModel
 import com.batararaja.userstory.Preferences
 import com.batararaja.userstory.R
+import com.batararaja.userstory.ViewModelFactory
 import com.batararaja.userstory.databinding.ActivityAuthBinding
 import com.batararaja.userstory.ui.fragment.LoginFragment
 import com.batararaja.userstory.ui.fragment.RegisterFragment

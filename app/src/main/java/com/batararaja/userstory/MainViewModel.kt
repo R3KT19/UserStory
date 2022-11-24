@@ -126,11 +126,12 @@ class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() 
         })
     }
 
-    fun uploadImage(photo : File?, desc : String) {
+    fun uploadImage(photo : File?, desc : String, lat : Float?, lon : Float?) {
         _isLoading.value = true
         val file = reduceFileImage(photo as File)
 
         val description = desc.toRequestBody("text/plain".toMediaType())
+        val locationLat = lat.toString().toRequestBody("")
         val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
         val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
             "photo",
@@ -138,7 +139,7 @@ class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() 
             requestImageFile
         )
 
-        val client = ApiConfig.getApiService().uploadImage(imageMultipart, description)
+        val client = ApiConfig.getApiService().uploadImage(imageMultipart, description, lat, lon)
 
         client.enqueue(object : Callback<FileUploadResponse> {
             override fun onResponse(

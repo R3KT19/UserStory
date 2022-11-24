@@ -3,6 +3,7 @@ package com.batararaja.userstory.ui.activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
@@ -119,7 +120,7 @@ class ListStoryActivity : AppCompatActivity() {
 
     private fun setupAction() {
         binding.settingImageView.setOnClickListener {
-//            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
+            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
         }
     }
 

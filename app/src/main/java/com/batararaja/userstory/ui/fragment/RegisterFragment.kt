@@ -10,10 +10,12 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.ViewModelProvider
 import com.batararaja.userstory.MainViewModel
 import com.batararaja.userstory.R
 import com.batararaja.userstory.RegisterResponse
+import com.batararaja.userstory.ViewModelFactory
 import com.batararaja.userstory.databinding.FragmentRegisterBinding
 
 class RegisterFragment : Fragment() {
@@ -21,14 +23,16 @@ class RegisterFragment : Fragment() {
     private var _binding : FragmentRegisterBinding? = null
     private val binding get() = _binding!!
 
+    private val mainViewModel: MainViewModel by viewModels {
+        ViewModelFactory(requireContext())
+    }
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View {
         _binding = FragmentRegisterBinding.inflate(inflater, container, false)
-        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-            MainViewModel::class.java)
 
         binding.tvLoginAccount.setOnClickListener {
             changeFragment()
