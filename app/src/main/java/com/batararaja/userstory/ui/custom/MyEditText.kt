@@ -5,9 +5,7 @@ import android.graphics.Canvas
 import android.text.Editable
 import android.text.TextWatcher
 import android.util.AttributeSet
-import android.util.Patterns
 import androidx.appcompat.widget.AppCompatEditText
-import androidx.core.widget.addTextChangedListener
 import com.batararaja.userstory.R
 
 class MyEditText : AppCompatEditText {

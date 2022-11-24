@@ -3,22 +3,18 @@ package com.batararaja.userstory.ui.activity
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
-import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
 import android.view.View
-import android.widget.Toast
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
-import androidx.lifecycle.ViewModelProvider
-import androidx.paging.PagingData
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.batararaja.userstory.*
+import com.batararaja.userstory.MainViewModel
 import com.batararaja.userstory.Preferences
-import com.batararaja.userstory.adapter.ListStoryAdapter
+import com.batararaja.userstory.R
+import com.batararaja.userstory.ViewModelFactory
 import com.batararaja.userstory.adapter.LoadingStateAdapter
 import com.batararaja.userstory.adapter.StoryListAdapter
-import com.batararaja.userstory.api.entity.StoryEntity
 import com.batararaja.userstory.databinding.ActivityListStoryBinding
 
 class ListStoryActivity : AppCompatActivity() {
@@ -59,7 +55,6 @@ class ListStoryActivity : AppCompatActivity() {
 //                ).show()
 //            }
 //        })
-
         binding.rvStory.layoutManager = LinearLayoutManager(this)
 
         getData()
@@ -67,6 +62,7 @@ class ListStoryActivity : AppCompatActivity() {
         binding.fabAddStory.setOnClickListener {
             val intent = Intent(this@ListStoryActivity, AddStoryActivity::class.java)
             startActivity(intent)
+            finish()
         }
 
         setupAction()
@@ -77,28 +73,15 @@ class ListStoryActivity : AppCompatActivity() {
 
     private fun getData() {
         val adapter = StoryListAdapter()
+
         binding.rvStory.adapter = adapter.withLoadStateFooter(
             footer = LoadingStateAdapter {
                 adapter.retry()
             }
         )
-        mainViewModel.getStory()
-        mainViewModel.mediator.observe(this, {})
-        mainViewModel._story.observe(this, {
+        mainViewModel.story.observe(this, {
             adapter.submitData(lifecycle, it)
         })
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Thread.sleep(100)
-//        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-//            MainViewModel::class.java)
-//        mainViewModel.getStory()
-//        mainViewModel.listStory.observe(this, { data ->
-//            setAdapterData(data)
-//        })
-        getData()
     }
 
     override fun onCreateOptionsMenu(menu: Menu?): Boolean {
@@ -118,6 +101,10 @@ class ListStoryActivity : AppCompatActivity() {
                 startActivity(intent)
                 finish()
             }
+            R.id.map -> {
+                val intent = Intent(this@ListStoryActivity, MapsActivity::class.java)
+                startActivity(intent)
+            }
         }
         return true
     }
@@ -133,7 +120,6 @@ class ListStoryActivity : AppCompatActivity() {
     private fun setupAction() {
         binding.settingImageView.setOnClickListener {
 //            startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
-            getData()
         }
     }
 

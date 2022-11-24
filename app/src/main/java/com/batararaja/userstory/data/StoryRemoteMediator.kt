@@ -1,5 +1,6 @@
 package com.dicoding.myunlimitedquotes.data
 
+import android.util.Log
 import androidx.paging.ExperimentalPagingApi
 import androidx.paging.LoadType
 import androidx.paging.PagingState
@@ -9,7 +10,6 @@ import com.batararaja.userstory.api.ApiService
 import com.batararaja.userstory.api.entity.StoryEntity
 import com.batararaja.userstory.database.RemoteKeys
 import com.batararaja.userstory.database.StoryDatabase
-import java.time.ZonedDateTime
 
 
 @OptIn(ExperimentalPagingApi::class)
@@ -20,6 +20,7 @@ class StoryRemoteMediator(
 
     private companion object {
         const val INITIAL_PAGE_INDEX = 1
+        private const val TAG = "Mediator"
     }
 
     override suspend fun initialize(): InitializeAction {
@@ -60,6 +61,7 @@ class StoryRemoteMediator(
                     database.remoteKeysDao().deleteRemoteKeys()
                     database.storyDao().deleteAll()
                 }
+                Log.d(TAG, "load: Test")
                 val prevKey = if (page == 1) null else page - 1
                 val nextKey = if (endOfPaginationReached) null else page + 1
                 val keys = responseData.listStory.map {
@@ -104,5 +106,4 @@ class StoryRemoteMediator(
             }
         }
     }
-
 }

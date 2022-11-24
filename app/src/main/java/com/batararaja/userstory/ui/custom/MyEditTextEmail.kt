@@ -33,7 +33,7 @@ class MyEditTextEmail : AppCompatEditText {
             }
 
             override fun afterTextChanged(p0: Editable?) {
-                if (!Patterns.EMAIL_ADDRESS.matcher(p0).matches()  ) showError(context.resources.getString(R.string.error_email)) else showError(null)
+                if (!Patterns.EMAIL_ADDRESS.matcher(p0.toString()).matches()  ) showError(context.resources.getString(R.string.error_email)) else showError(null)
             }
 
         })

@@ -10,13 +10,15 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.activity.viewModels
 import androidx.annotation.ColorInt
 import androidx.annotation.DrawableRes
 import androidx.core.content.ContextCompat
 import androidx.core.content.res.ResourcesCompat
 import androidx.core.graphics.drawable.DrawableCompat
-import com.batararaja.userstory.R
+import com.batararaja.userstory.*
 import com.batararaja.userstory.databinding.ActivityMapsBinding
 import com.google.android.gms.maps.CameraUpdateFactory
 import com.google.android.gms.maps.GoogleMap
@@ -30,33 +32,90 @@ import com.google.android.gms.maps.model.MarkerOptions
 class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var binding : ActivityMapsBinding
+    private lateinit var location: ArrayList<LatLng>
+    private val mainViewModel: MainViewModel by viewModels {
+        ViewModelFactory(this)
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
+        location = ArrayList()
+        mainViewModel.getStoryMap()
+        mainViewModel.listStory.observe(this, {data ->
+            convert(data)
+            Log.d(TAG, "onCreate: ${data.size}")
+        })
+        Thread.sleep(200)
+        Log.d(TAG, "onCreateDiluar: ${location.size}")
         val mapFragment = supportFragmentManager
             .findFragmentById(R.id.map) as SupportMapFragment
         mapFragment.getMapAsync(this)
     }
 
+    private fun convert(data: List<ListStoryItem>) {
+        for (i in data.indices){
+            val list = LatLng(
+                data[i].lat,
+                data[i].lon
+            )
+            Log.d(TAG, "convert: $i")
+            location.add(list)
+        }
+        Log.d(TAG, "convert: ${location.size}")
+    }
+
+//    private fun change(data: List<ListStoryItem>?) {
+//        if (data != null) {
+//            for (i in 0..data.size){
+//                location.add(location[i])
+//            }
+//        }
+//    }
+
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
-        // Add a marker in Sydney and move the camera
-//        val sydney = LatLng(-34.0, 151.0)
-//        mMap.addMarker(MarkerOptions().position(sydney).title("Marker in Sydney"))
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(sydney))
+        for (i in location.indices) {
 
-        val dicodingSpace = LatLng(-6.8957643, 107.6338462)
-        mMap.addMarker(
-            MarkerOptions()
-                .position(dicodingSpace)
-                .title("Dicoding Space")
-                .snippet("Batik Kumeli No.50")
-        )
-        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(dicodingSpace, 15f))
+            mMap.addMarker(MarkerOptions().position(location[i]).title("Marker"))
+
+            // below lin is use to zoom our camera on map.
+            mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location[i], 15f))
+
+            // below line is use to move our camera to the specific location.
+            mMap.moveCamera(CameraUpdateFactory.newLatLng(location[i]))
+        }
+//        for (i in 0..location.size){
+//            val marker = LatLng(location[i].lat, location[i].lon)
+//            mMap.addMarker(
+//                MarkerOptions()
+//                    .position(marker)
+//                    .title(location[i].name)
+//                    .snippet(location[i].description)
+//            )
+//            mMap.moveCamera(CameraUpdateFactory.newLatLng(marker))
+//
+//        }
+
+//        val dicodingSpace = LatLng(-6.8957643, 107.6338462)
+//        mMap.addMarker(
+//            MarkerOptions()
+//                .position(dicodingSpace)
+//                .title("Dicoding Space")
+//                .snippet("Batik Kumeli No.50")
+//        )
+//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(dicodingSpace, 15f))
+//
+//        val test = LatLng(-6.8957644, 107.6338462)
+//        mMap.addMarker(
+//            MarkerOptions()
+//                .position(test)
+//                .title("Test")
+//                .snippet("Batik Kumeli No.50")
+//        )
+//        mMap.moveCamera(CameraUpdateFactory.newLatLng(test))
 
         mMap.setOnMapLongClickListener { latLng ->
             mMap.addMarker(
@@ -147,5 +206,9 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         DrawableCompat.setTint(vectorDrawable, color)
         vectorDrawable.draw(canvas)
         return BitmapDescriptorFactory.fromBitmap(bitmap)
+    }
+
+    companion object{
+        private const val TAG = "Maps"
     }
 }

@@ -144,6 +144,9 @@ class AddStoryActivity : AppCompatActivity() {
                     ).show()
                 }
             })
+            val intent = Intent(this@AddStoryActivity, ListStoryActivity::class.java)
+            intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            startActivity(intent)
             finish()
         } else if (binding.edDescription.text.toString().isNullOrEmpty()){
             binding.edDescription.error = applicationContext.resources.getString(R.string.error_description)

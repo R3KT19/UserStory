@@ -3,8 +3,6 @@ package com.batararaja.userstory.api.entity
 import androidx.room.Entity
 import androidx.room.PrimaryKey
 import com.google.gson.annotations.SerializedName
-import java.time.ZonedDateTime
-import java.util.*
 
 @Entity(tableName = "story")
 data class StoryEntity(

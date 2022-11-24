@@ -23,6 +23,11 @@ interface ApiService {
         @Query("size") size : Int
     ) : StoryResponse
 
+    @GET("stories")
+    fun getStoriesMap(
+        @Query("location") location : Int
+    ) : Call<StoryResponse>
+
     @GET("stories/{id}")
     fun getDetailStory(
         @Path("id") id : String

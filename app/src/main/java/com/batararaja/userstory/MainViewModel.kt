@@ -36,19 +36,11 @@ class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() 
     private val _statusMessage = MutableLiveData<Event<String>>()
     val message : LiveData<Event<String>> = _statusMessage
 
-    val _story = MutableLiveData<PagingData<StoryEntity>>()
-
     val story: LiveData<PagingData<StoryEntity>> =
         storyRepository.getStory().cachedIn(viewModelScope)
 
-    val mediator = MediatorLiveData<Unit>()
-
     companion object {
         private const val TAG = "MainViewModel"
-    }
-
-    fun getStory() {
-        mediator.addSource(story, {_story.value = it})
     }
 
     fun register(name: String, email: String, password: String) {
@@ -107,32 +99,32 @@ class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() 
         })
     }
 
-//    fun getStory() {
-//        _isLoading.value = true
-//        val client = ApiConfig.getApiService().getStories()
-//        client.enqueue(object : Callback<StoryResponse> {
-//            override fun onResponse(
-//                call: Call<StoryResponse>,
-//                response: Response<StoryResponse>
-//            ) {
-//                _isLoading.value = false
-//                if (response.isSuccessful) {
-//                    _listStory.value = response.body()?.listStory
-//                    _statusMessage.value = Event(response.body()?.message.toString())
-//                } else {
-//                    _statusMessage.value = Event(response.message())
-//                    Log.e(TAG, "onFailure: ${response.message()}")
-//                }
-//            }
-//
-//            override fun onFailure(call: Call<StoryResponse>, t: Throwable) {
-//                _isLoading.value = false
-//                _statusMessage.value = Event(t.message.toString())
-//                Log.e(TAG, "onFailure: ${t.message.toString()}")
-//            }
-//
-//        })
-//    }
+    fun getStoryMap() {
+        _isLoading.value = true
+        val client = ApiConfig.getApiService().getStoriesMap(1)
+        client.enqueue(object : Callback<StoryResponse> {
+            override fun onResponse(
+                call: Call<StoryResponse>,
+                response: Response<StoryResponse>
+            ) {
+                _isLoading.value = false
+                if (response.isSuccessful) {
+                    _listStory.value = response.body()?.listStory
+                    _statusMessage.value = Event(response.body()?.message.toString())
+                } else {
+                    _statusMessage.value = Event(response.message())
+                    Log.e(TAG, "onFailure: ${response.message()}")
+                }
+            }
+
+            override fun onFailure(call: Call<StoryResponse>, t: Throwable) {
+                _isLoading.value = false
+                _statusMessage.value = Event(t.message.toString())
+                Log.e(TAG, "onFailure: ${t.message.toString()}")
+            }
+
+        })
+    }
 
     fun uploadImage(photo : File?, desc : String) {
         _isLoading.value = true
