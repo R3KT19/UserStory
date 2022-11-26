@@ -4,6 +4,7 @@ import android.Manifest
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.graphics.BitmapFactory
+import android.location.Location
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
@@ -15,25 +16,19 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
-import androidx.lifecycle.ViewModelProvider
 import com.batararaja.userstory.*
 import com.batararaja.userstory.databinding.ActivityAddStoryBinding
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import java.io.File
 
 class AddStoryActivity : AppCompatActivity() {
     private lateinit var binding : ActivityAddStoryBinding
     private lateinit var currentPhotoPath: String
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
 
-    private val mainViewModel: MainViewModel by viewModels {
-        ViewModelFactory(this)
-    }
 
     private var getFile: File? = null
-
-    companion object {
-        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
-        private const val REQUEST_CODE_PERMISSIONS = 10
-    }
 
     override fun onRequestPermissionsResult(
         requestCode: Int,
@@ -70,14 +65,12 @@ class AddStoryActivity : AppCompatActivity() {
                 REQUEST_CODE_PERMISSIONS
             )
         }
+
         binding.cameraButton.setOnClickListener { startTakePhoto() }
         binding.galleryButton.setOnClickListener { startGallery() }
-        binding.uploadButton.setOnClickListener { uploadImage() }
+        binding.uploadButton.setOnClickListener {  upload() }
 
-
-        mainViewModel.isLoading.observe(this, {
-            showLoading(it)
-        })
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
     }
 
     private val launcherIntentCamera = registerForActivityResult(
@@ -130,24 +123,84 @@ class AddStoryActivity : AppCompatActivity() {
         }
     }
 
-    private fun uploadImage() {
-        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-            MainViewModel::class.java)
-        if (!binding.edDescription.text.isNullOrEmpty() && getFile != null){
-            mainViewModel.uploadImage(getFile, binding.edDescription.text.toString(), null, null)
-            mainViewModel.message.observe(this, {
-                it.getContentIfNotHandled()?.let {
-                    Toast.makeText(
-                        this,
-                        it,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                }
-            })
-            val intent = Intent(this@AddStoryActivity, ListStoryActivity::class.java)
-            intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-            startActivity(intent)
-            finish()
+    private fun upload() {
+        if (binding.switchLocation.isChecked){
+            getMyLastLocation()
+        } else {
+            uploadImage(null)
+        }
+    }
+
+    private fun uploadImage(location: Location?) {
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(baseContext)
+        val mainViewModel: MainViewModel by viewModels {
+            factory
+        }
+
+        if (!binding.edDescription.text.isNullOrEmpty() && getFile != null && location != null){
+            mainViewModel.uploadImage(getFile, binding.edDescription.text.toString(),location.latitude, location.longitude)
+                .observe(this, { result ->
+                    if (result != null) {
+                        when (result) {
+                            is Result.Loading -> {
+                                binding.progressBar.visibility = View.VISIBLE
+                            }
+                            is Result.Success -> {
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(
+                                    this,
+                                    result.data.message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                val intent = Intent(this@AddStoryActivity, ListStoryActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+                                startActivity(intent)
+                                finish()
+                            }
+                            is Result.Error -> {
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(
+                                    this,
+                                    result.error,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                })
+
+        }else if (!binding.edDescription.text.isNullOrEmpty() && getFile != null && location == null){
+            mainViewModel.uploadImage(getFile, binding.edDescription.text.toString(),null, null)
+                .observe(this, { result ->
+                    if (result != null) {
+                        when (result) {
+                            is Result.Loading -> {
+                                binding.progressBar.visibility = View.VISIBLE
+                            }
+                            is Result.Success -> {
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(
+                                    this,
+                                    result.data.message,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                                val intent = Intent(this@AddStoryActivity, ListStoryActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+                                startActivity(intent)
+                                finish()
+                            }
+                            is Result.Error -> {
+                                binding.progressBar.visibility = View.GONE
+                                Toast.makeText(
+                                    this,
+                                    result.error,
+                                    Toast.LENGTH_SHORT
+                                ).show()
+                            }
+                        }
+                    }
+                })
+
         } else if (binding.edDescription.text.toString().isNullOrEmpty()){
             binding.edDescription.error = applicationContext.resources.getString(R.string.error_description)
         } else if (getFile == null) {
@@ -156,11 +209,57 @@ class AddStoryActivity : AppCompatActivity() {
 
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        if (isLoading) {
-            binding.progressBar.visibility = View.VISIBLE
-        } else {
-            binding.progressBar.visibility = View.GONE
+    private val requestPermissionLauncher =
+        registerForActivityResult(
+            ActivityResultContracts.RequestMultiplePermissions()
+        ) { permissions ->
+            when {
+                permissions[Manifest.permission.ACCESS_FINE_LOCATION] ?: false -> {
+                    getMyLastLocation()
+                }
+                permissions[Manifest.permission.ACCESS_COARSE_LOCATION] ?: false -> {
+                    getMyLastLocation()
+                }
+                else -> {
+
+                }
+            }
         }
+
+    private fun checkPermission(permission: String): Boolean {
+        return ContextCompat.checkSelfPermission(
+            this,
+            permission
+        ) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun getMyLastLocation() {
+        if (checkPermission(Manifest.permission.ACCESS_FINE_LOCATION) &&
+            checkPermission(Manifest.permission.ACCESS_COARSE_LOCATION)
+        ) {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    uploadImage(location)
+                } else {
+                    Toast.makeText(
+                        this@AddStoryActivity,
+                        "Location is not found. Try Again",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
+            }
+        } else {
+            requestPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
+    companion object {
+        private val REQUIRED_PERMISSIONS = arrayOf(Manifest.permission.CAMERA)
+        private const val REQUEST_CODE_PERMISSIONS = 10
     }
 }

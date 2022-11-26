@@ -10,6 +10,7 @@ import android.os.Bundle
 import android.util.Log
 import android.view.Menu
 import android.view.MenuItem
+import android.view.View
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
@@ -33,20 +34,43 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
     private lateinit var mMap: GoogleMap
     private lateinit var binding : ActivityMapsBinding
     private lateinit var location: ArrayList<LatLng>
-    private val mainViewModel: MainViewModel by viewModels {
-        ViewModelFactory(this)
-    }
+    private lateinit var dataDetail : ArrayList<StoryEntity>
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityMapsBinding.inflate(layoutInflater)
         setContentView(binding.root)
         location = ArrayList()
-        mainViewModel.getStoryMap()
-        mainViewModel.listStory.observe(this, {data ->
-            convert(data)
-            Log.d(TAG, "onCreate: ${data.size}")
+        dataDetail = ArrayList()
+
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(baseContext)
+        val mainViewModel: MainViewModel by viewModels {
+            factory
+        }
+
+        mainViewModel.getStoryMap().observe(this, {result ->
+            if (result != null) {
+                when (result) {
+                    is Result.Loading -> {
+                        binding.progressBar.visibility = View.VISIBLE
+                    }
+                    is Result.Success -> {
+                        binding.progressBar.visibility = View.GONE
+                        val data = result.data.listStory
+                        convert(data)
+                    }
+                    is Result.Error -> {
+                        binding.progressBar.visibility = View.GONE
+                        Toast.makeText(
+                            this,
+                            result.error,
+                            Toast.LENGTH_SHORT
+                        ).show()
+                    }
+                }
+            }
         })
+
         Thread.sleep(200)
         Log.d(TAG, "onCreateDiluar: ${location.size}")
         val mapFragment = supportFragmentManager
@@ -54,68 +78,38 @@ class MapsActivity : AppCompatActivity(), OnMapReadyCallback {
         mapFragment.getMapAsync(this)
     }
 
+
+
     private fun convert(data: List<ListStoryItem>) {
         for (i in data.indices){
             val list = LatLng(
                 data[i].lat,
                 data[i].lon
             )
-            Log.d(TAG, "convert: $i")
+            val detail = StoryEntity(
+                data[i].id,
+                data[i].photoUrl,
+                data[i].name,
+                data[i].description
+            )
             location.add(list)
+            dataDetail.add(detail)
         }
-        Log.d(TAG, "convert: ${location.size}")
     }
-
-//    private fun change(data: List<ListStoryItem>?) {
-//        if (data != null) {
-//            for (i in 0..data.size){
-//                location.add(location[i])
-//            }
-//        }
-//    }
 
     override fun onMapReady(googleMap: GoogleMap) {
         mMap = googleMap
 
+        mMap.setOnMapLoadedCallback {  }
+
         for (i in location.indices) {
 
-            mMap.addMarker(MarkerOptions().position(location[i]).title("Marker"))
+            mMap.addMarker(MarkerOptions().position(location[i]).title(dataDetail[i].name))
 
-            // below lin is use to zoom our camera on map.
             mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(location[i], 15f))
 
-            // below line is use to move our camera to the specific location.
             mMap.moveCamera(CameraUpdateFactory.newLatLng(location[i]))
         }
-//        for (i in 0..location.size){
-//            val marker = LatLng(location[i].lat, location[i].lon)
-//            mMap.addMarker(
-//                MarkerOptions()
-//                    .position(marker)
-//                    .title(location[i].name)
-//                    .snippet(location[i].description)
-//            )
-//            mMap.moveCamera(CameraUpdateFactory.newLatLng(marker))
-//
-//        }
-
-//        val dicodingSpace = LatLng(-6.8957643, 107.6338462)
-//        mMap.addMarker(
-//            MarkerOptions()
-//                .position(dicodingSpace)
-//                .title("Dicoding Space")
-//                .snippet("Batik Kumeli No.50")
-//        )
-//        mMap.animateCamera(CameraUpdateFactory.newLatLngZoom(dicodingSpace, 15f))
-//
-//        val test = LatLng(-6.8957644, 107.6338462)
-//        mMap.addMarker(
-//            MarkerOptions()
-//                .position(test)
-//                .title("Test")
-//                .snippet("Batik Kumeli No.50")
-//        )
-//        mMap.moveCamera(CameraUpdateFactory.newLatLng(test))
 
         mMap.setOnMapLongClickListener { latLng ->
             mMap.addMarker(

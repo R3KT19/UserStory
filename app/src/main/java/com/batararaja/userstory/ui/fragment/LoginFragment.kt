@@ -24,9 +24,6 @@ class LoginFragment : Fragment() {
     private var _binding : FragmentLoginBinding? = null
     private val binding get() = _binding!!
 
-    private val mainViewModel: MainViewModel by viewModels {
-        ViewModelFactory(requireContext())
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -34,22 +31,51 @@ class LoginFragment : Fragment() {
     ): View {
         _binding = FragmentLoginBinding.inflate(inflater, container, false)
 
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(requireActivity())
+        val mainViewModel: MainViewModel by viewModels {
+            factory
+        }
+
         binding.btnLogin.setOnClickListener {
+//            mainViewModel.login(binding.edLoginEmail.text.toString(),
+//                binding.edLoginPassword.text.toString())
+//            mainViewModel.login.observe(viewLifecycleOwner, {data ->
+//                showMessage(data)
+//            })
+//            mainViewModel.isLoading.observe(viewLifecycleOwner, {
+//                showLoading(it)
+//            })
+//            mainViewModel.message.observe(viewLifecycleOwner, {
+//                it.getContentIfNotHandled()?.let {
+//                    Toast.makeText(
+//                        activity,
+//                        it,
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//            })
+
             mainViewModel.login(binding.edLoginEmail.text.toString(),
-                binding.edLoginPassword.text.toString())
-            mainViewModel.login.observe(viewLifecycleOwner, {data ->
-                showMessage(data)
-            })
-            mainViewModel.isLoading.observe(viewLifecycleOwner, {
-                showLoading(it)
-            })
-            mainViewModel.message.observe(viewLifecycleOwner, {
-                it.getContentIfNotHandled()?.let {
-                    Toast.makeText(
-                        activity,
-                        it,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                binding.edLoginPassword.text.toString()).observe(viewLifecycleOwner, {result ->
+                if (result != null) {
+                    when (result) {
+                        is Result.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
+                        is Result.Success -> {
+                            binding.progressBar.visibility = View.GONE
+                            val data = result.data
+                            showMessage(data)
+                        }
+                        is Result.Error -> {
+                            binding.progressBar.visibility = View.GONE
+                            Toast.makeText(
+                                context,
+                                result.error,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
             })
         }
@@ -70,6 +96,11 @@ class LoginFragment : Fragment() {
         if (data?.error == false) {
             val preferences = Preferences(requireActivity())
             preferences.setToken(data.loginResult.token)
+            Toast.makeText(
+                requireActivity(),
+                data.message,
+                Toast.LENGTH_SHORT
+            ).show()
             moveToListStory()
         } else {
             Toast.makeText(

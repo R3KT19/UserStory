@@ -1,4 +1,4 @@
-package com.dicoding.myunlimitedquotes.data
+package com.batararaja.userstory.data
 
 import android.util.Log
 import androidx.paging.ExperimentalPagingApi
@@ -61,7 +61,6 @@ class StoryRemoteMediator(
                     database.remoteKeysDao().deleteRemoteKeys()
                     database.storyDao().deleteAll()
                 }
-                Log.d(TAG, "load: Test")
                 val prevKey = if (page == 1) null else page - 1
                 val nextKey = if (endOfPaginationReached) null else page + 1
                 val keys = responseData.listStory.map {

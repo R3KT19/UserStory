@@ -6,7 +6,6 @@ import android.os.Bundle
 import android.provider.Settings
 import android.view.Menu
 import android.view.MenuItem
-import android.view.View
 import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -24,38 +23,12 @@ class ListStoryActivity : AppCompatActivity() {
         instance = this
     }
 
-    private val mainViewModel: MainViewModel by viewModels {
-        ViewModelFactory(this)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityListStoryBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-//        val mainViewModel = ViewModelProvider(this, ViewModelProvider.NewInstanceFactory()).get(
-//            MainViewModel::class.java)
-//
-//        mainViewModel.getStory()
-//        mainViewModel.listStory.observe(this, { data ->
-//            if (data != null) {
-//                setAdapterData(data)
-//            }
-//        })
-//
-//        mainViewModel.isLoading.observe(this, {
-//            showLoading(it)
-//        })
-//
-//        mainViewModel.message.observe(this, {
-//            it.getContentIfNotHandled()?.let {
-//                Toast.makeText(
-//                    this,
-//                    it,
-//                    Toast.LENGTH_SHORT
-//                ).show()
-//            }
-//        })
         binding.rvStory.layoutManager = LinearLayoutManager(this)
 
         getData()
@@ -80,7 +53,13 @@ class ListStoryActivity : AppCompatActivity() {
                 adapter.retry()
             }
         )
-        mainViewModel.story.observe(this, {
+
+        val factory: ViewModelFactory = ViewModelFactory.getInstance(baseContext)
+        val mainViewModel: MainViewModel by viewModels {
+            factory
+        }
+
+        mainViewModel.getStory().observe(this, {
             adapter.submitData(lifecycle, it)
         })
     }
@@ -110,14 +89,6 @@ class ListStoryActivity : AppCompatActivity() {
         return true
     }
 
-    private fun showLoading(isLoading: Boolean) {
-        if (isLoading) {
-            binding.progressBar.visibility = View.VISIBLE
-        } else {
-            binding.progressBar.visibility = View.GONE
-        }
-    }
-
     private fun setupAction() {
         binding.settingImageView.setOnClickListener {
             startActivity(Intent(Settings.ACTION_LOCALE_SETTINGS))
@@ -125,7 +96,6 @@ class ListStoryActivity : AppCompatActivity() {
     }
 
     companion object {
-        private const val TAG = "ListStoryActivity"
         private var instance: ListStoryActivity? = null
 
         val context: Context?

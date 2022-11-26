@@ -17,15 +17,12 @@ import com.batararaja.userstory.R
 import com.batararaja.userstory.RegisterResponse
 import com.batararaja.userstory.ViewModelFactory
 import com.batararaja.userstory.databinding.FragmentRegisterBinding
+import com.batararaja.userstory.Result
 
 class RegisterFragment : Fragment() {
 
     private var _binding : FragmentRegisterBinding? = null
     private val binding get() = _binding!!
-
-    private val mainViewModel: MainViewModel by viewModels {
-        ViewModelFactory(requireContext())
-    }
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -38,22 +35,52 @@ class RegisterFragment : Fragment() {
             changeFragment()
         }
         binding.btnRegister.setOnClickListener {
+            val factory: ViewModelFactory = ViewModelFactory.getInstance(requireActivity())
+            val mainViewModel: MainViewModel by viewModels {
+                factory
+            }
+
+//            mainViewModel.register(binding.edRegisterName.text.toString(),
+//                binding.edRegisterEmail.text.toString(),
+//                binding.edRegisterPassword.text.toString())
+//            mainViewModel.register.observe(viewLifecycleOwner, {data->
+//                showMessage(data)
+//            })
+//            mainViewModel.isLoading.observe(viewLifecycleOwner, {
+//                showLoading(it)
+//            })
+//            mainViewModel.message.observe(viewLifecycleOwner, {
+//                it.getContentIfNotHandled()?.let {
+//                    Toast.makeText(
+//                        activity,
+//                        it,
+//                        Toast.LENGTH_SHORT
+//                    ).show()
+//                }
+//            })
+
             mainViewModel.register(binding.edRegisterName.text.toString(),
                 binding.edRegisterEmail.text.toString(),
-                binding.edRegisterPassword.text.toString())
-            mainViewModel.register.observe(viewLifecycleOwner, {data->
-                showMessage(data)
-            })
-            mainViewModel.isLoading.observe(viewLifecycleOwner, {
-                showLoading(it)
-            })
-            mainViewModel.message.observe(viewLifecycleOwner, {
-                it.getContentIfNotHandled()?.let {
-                    Toast.makeText(
-                        activity,
-                        it,
-                        Toast.LENGTH_SHORT
-                    ).show()
+                binding.edRegisterPassword.text.toString()).observe(viewLifecycleOwner, {result ->
+                if (result != null) {
+                    when (result) {
+                        is Result.Loading -> {
+                            binding.progressBar.visibility = View.VISIBLE
+                        }
+                        is Result.Success -> {
+                            binding.progressBar.visibility = View.GONE
+                            val data = result.data
+                            showMessage(data)
+                        }
+                        is Result.Error -> {
+                            binding.progressBar.visibility = View.GONE
+                            Toast.makeText(
+                                context,
+                                result.error,
+                                Toast.LENGTH_SHORT
+                            ).show()
+                        }
+                    }
                 }
             })
         }
@@ -64,6 +91,11 @@ class RegisterFragment : Fragment() {
 
     private fun showMessage(data: RegisterResponse?) {
         if (data?.error == false) {
+            Toast.makeText(
+                requireActivity(),
+                data.message,
+                Toast.LENGTH_SHORT
+            ).show()
             changeFragment()
         } else {
             Toast.makeText(

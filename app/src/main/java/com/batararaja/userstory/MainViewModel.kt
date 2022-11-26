@@ -1,175 +1,32 @@
 package com.batararaja.userstory
 
-import android.content.Context
-import android.util.Log
-import androidx.lifecycle.*
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.batararaja.userstory.api.ApiConfig
 import com.batararaja.userstory.api.entity.StoryEntity
-import com.batararaja.userstory.di.Injection
-import com.dicoding.myunlimitedquotes.data.StoryRepository
-import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.MediaType.Companion.toMediaTypeOrNull
-import okhttp3.MultipartBody
-import okhttp3.RequestBody.Companion.asRequestBody
-import okhttp3.RequestBody.Companion.toRequestBody
-import retrofit2.Call
-import retrofit2.Callback
-import retrofit2.Response
+import com.batararaja.userstory.data.StoryRepository
 import java.io.File
 
 class MainViewModel(private val storyRepository: StoryRepository) : ViewModel() {
 
-    private val _registerResponse = MutableLiveData<RegisterResponse>()
-    val register: LiveData<RegisterResponse> = _registerResponse
+//    val story: LiveData<PagingData<StoryEntity>> =
+//        storyRepository.getStory().cachedIn(viewModelScope)
 
-    private val _loginResponse = MutableLiveData<LoginResponse>()
-    val login: LiveData<LoginResponse> = _loginResponse
+    fun getStory() = storyRepository.getStory().cachedIn(viewModelScope)
 
-    private val _isLoading = MutableLiveData<Boolean>()
-    val isLoading: LiveData<Boolean> = _isLoading
+    fun register(name: String, email: String, password: String) =
+        storyRepository.register(name, email, password)
 
-    private val _listStory = MutableLiveData<List<ListStoryItem>>()
-    val listStory: MutableLiveData<List<ListStoryItem>> = _listStory
+    fun login(email: String, password: String) =
+        storyRepository.login(email, password)
 
-    private val _statusMessage = MutableLiveData<Event<String>>()
-    val message : LiveData<Event<String>> = _statusMessage
+    fun getStoryMap() = storyRepository.getStoryMap()
 
-    val story: LiveData<PagingData<StoryEntity>> =
-        storyRepository.getStory().cachedIn(viewModelScope)
+    fun uploadImage(photo : File?, desc : String, lat : Double?, lon : Double?) = storyRepository.uploadImage(photo, desc, lat, lon)
 
     companion object {
         private const val TAG = "MainViewModel"
-    }
-
-    fun register(name: String, email: String, password: String) {
-        _isLoading.value = true
-        val registerInfo = RegisterInfo(name, email, password)
-        val client = ApiConfig.getApiService().register(registerInfo)
-        client.enqueue(object : Callback<RegisterResponse> {
-            override fun onResponse(
-                call: Call<RegisterResponse>,
-                response: Response<RegisterResponse>
-            ) {
-                _isLoading.value = false
-                if (response.isSuccessful) {
-                    _registerResponse.value = response.body()
-                    _statusMessage.value = Event(response.body()?.message.toString())
-                } else {
-                    _statusMessage.value = Event(response.message())
-                    Log.e(TAG, "onFailure: ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<RegisterResponse>, t: Throwable) {
-                _isLoading.value = false
-                _statusMessage.value = Event(t.message.toString())
-                Log.e(TAG, "onFailure: ${t.message.toString()}")
-            }
-
-        })
-    }
-
-    fun login(email: String, password: String) {
-        _isLoading.value = true
-        val loginInfo = LoginInfo(email, password)
-        val client = ApiConfig.getApiService().login(loginInfo)
-        client.enqueue(object : Callback<LoginResponse> {
-            override fun onResponse(
-                call: Call<LoginResponse>,
-                response: Response<LoginResponse>
-            ) {
-                _isLoading.value = false
-                if (response.isSuccessful) {
-                    _statusMessage.value = Event(response.body()?.message.toString())
-                    _loginResponse.value = response.body()
-                } else {
-                    _statusMessage.value = Event(response.message())
-                    Log.e(TAG, "onFailure: ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<LoginResponse>, t: Throwable) {
-                _isLoading.value = false
-                _statusMessage.value = Event(t.message.toString())
-                Log.e(TAG, "onFailure: ${t.message.toString()}")
-            }
-
-        })
-    }
-
-    fun getStoryMap() {
-        _isLoading.value = true
-        val client = ApiConfig.getApiService().getStoriesMap(1)
-        client.enqueue(object : Callback<StoryResponse> {
-            override fun onResponse(
-                call: Call<StoryResponse>,
-                response: Response<StoryResponse>
-            ) {
-                _isLoading.value = false
-                if (response.isSuccessful) {
-                    _listStory.value = response.body()?.listStory
-                    _statusMessage.value = Event(response.body()?.message.toString())
-                } else {
-                    _statusMessage.value = Event(response.message())
-                    Log.e(TAG, "onFailure: ${response.message()}")
-                }
-            }
-
-            override fun onFailure(call: Call<StoryResponse>, t: Throwable) {
-                _isLoading.value = false
-                _statusMessage.value = Event(t.message.toString())
-                Log.e(TAG, "onFailure: ${t.message.toString()}")
-            }
-
-        })
-    }
-
-    fun uploadImage(photo : File?, desc : String, lat : Float?, lon : Float?) {
-        _isLoading.value = true
-        val file = reduceFileImage(photo as File)
-
-        val description = desc.toRequestBody("text/plain".toMediaType())
-        val locationLat = lat.toString().toRequestBody("")
-        val requestImageFile = file.asRequestBody("image/jpeg".toMediaTypeOrNull())
-        val imageMultipart: MultipartBody.Part = MultipartBody.Part.createFormData(
-            "photo",
-            file.name,
-            requestImageFile
-        )
-
-        val client = ApiConfig.getApiService().uploadImage(imageMultipart, description, lat, lon)
-
-        client.enqueue(object : Callback<FileUploadResponse> {
-            override fun onResponse(
-                call: Call<FileUploadResponse>,
-                response: Response<FileUploadResponse>
-            ) {
-                _isLoading.value = false
-                if (response.isSuccessful) {
-                    val responseBody = response.body()
-                    if (responseBody != null && !responseBody.error) {
-                        _statusMessage.value = Event(response.body()?.message.toString())
-                    }
-                } else {
-                    _statusMessage.value = Event(response.message())
-                }
-            }
-            override fun onFailure(call: Call<FileUploadResponse>, t: Throwable) {
-                _isLoading.value = false
-                _statusMessage.value = Event(t.message.toString())
-            }
-        })
-    }
-}
-
-class ViewModelFactory(private val context: Context) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(MainViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return MainViewModel(Injection.provideRepository(context)) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }

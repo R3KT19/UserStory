@@ -1,4 +1,4 @@
-package com.dicoding.myunlimitedquotes.data
+package com.batararaja.userstory.data
 
 import androidx.paging.PagingSource
 import androidx.paging.PagingState
